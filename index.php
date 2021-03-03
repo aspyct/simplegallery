@@ -36,7 +36,7 @@ define('SG_DEBUG', true);
  * A valid CSS hex color for your branding.
  * Used for the header background color.
  */
-define('SG_PRIMARY_COLOR', '#44ff55');
+define('SG_PRIMARY_COLOR', '#229933');
 
 
 /**
@@ -54,6 +54,15 @@ define('SG_SECONDARY_COLOR', '#ffffff');
  * Used for the <title> tag and in the header
  */
 define('SG_TITLE', 'github.com/aspyct/simplegallery');
+
+
+/**
+ * SG_LINK_HOME
+ *
+ * A link to the home of your website/store/social page/whatever.
+ * Set this to false if there's no website.
+ */
+define('SG_LINK_HOME', 'https://github.com/aspyct/simplegallery');
 
 
 /*******************************
@@ -158,24 +167,81 @@ function sg_get_album_directory($album = false) {
 }
 
 
+/**
+ * Attempt to parse the album name based on the standard naming of
+ * YYYY-MM-DD_Album-topic_GUID
+ * Returns an array with the [DATE, Album-topic], or [false, false] if the format is incorrect
+ */
+function sg_parse_album_name($album) {
+	if (preg_match('/^(\d{4}-\d{2}-\d{2})_([^_]+).*$/', $album, $matches)) {
+		return [$matches[1], $matches[2]];
+	}
+	else {
+		return [false, false];
+	}
+}
+
+
+function sg_format_album_title($album_title) {
+	return str_replace('-', ' ', $album_title);
+}
+
+
 function sg_show_album($album, $all_photos) {
 	$album_directory = SG_ALBUM_DIRECTORY.'/'.$album;
+	[$album_date, $album_title] = sg_parse_album_name($album);
+
 	// Yeah, I see your point, putting html here is dirty... or pragmatic? :D
 ?><!DOCTYPE html>
 <html>
 	<head>
 		<title><?= SG_TITLE ?></title>
 		<style>
+			html, body {
+				padding: 0;	
+				margin: 0;
+				font-family: sans-serif;
+			}
+
 			header {
 				color: <?= SG_SECONDARY_COLOR ?>;
 				background-color: <?= SG_PRIMARY_COLOR ?>;
 			}
+
+			header a, header a:visited {
+				color: <?= SG_SECONDARY_COLOR ?>;
+			}
+
+			header, h1, ul {
+				padding: 12px;
+			}
+
+			ul {
+				list-style-type: none;
+				padding: 0;
+				margin: 0;
+			}
+
+			li {
+				display: inline-block;
+			}
 		</style>
 	</head>
 	<body>
-		<header><?= SG_TITLE ?></header>
+		<header>
+			<?php if (SG_LINK_HOME !== false): ?>
+				<a href="<?= SG_LINK_HOME ?>"><?= SG_TITLE ?></a>
+			<?php else: ?>
+				<?= SG_TITLE ?>
+			<?php endif; ?>
+		</header>
 		<main>
-			All photos: <ul>
+			<?php if ($album_title !== false): ?>
+				<h1><?= sg_format_album_title($album_title) ?> - <?= $album_date ?></h1>
+			<?php else: ?>
+				<h1><?= $album ?></h1>
+			<?php endif; ?>
+			<ul>
 			<?php foreach ($all_photos as $photo): ?>
 				<li><a href="<?= $album_directory ?>/<?= $photo ?>"><img src="<?= $album_directory ?>/thumb-<?= $photo ?>"/></a></li>
 			<?php endforeach; ?>
