@@ -33,10 +33,27 @@ define('SG_DEBUG', true);
 /**
  * SG_PRIMARY_COLOR
  *
- * A valid CSS hex color for your branding
+ * A valid CSS hex color for your branding.
+ * Used for the header background color.
  */
-define('SG_PRIMARY_COLOR', '#44FF55');
+define('SG_PRIMARY_COLOR', '#44ff55');
 
+
+/**
+ * SG_SECONDARY_COLOR
+ *
+ * A valid CSS hex color for your branding.
+ * Used for the header text color.
+ */
+define('SG_SECONDARY_COLOR', '#ffffff');
+
+
+/**
+ * SG_TITLE
+ *
+ * Used for the <title> tag and in the header
+ */
+define('SG_TITLE', 'github.com/aspyct/simplegallery');
 
 
 /*******************************
@@ -143,12 +160,31 @@ function sg_get_album_directory($album = false) {
 
 function sg_show_album($album, $all_photos) {
 	$album_directory = SG_ALBUM_DIRECTORY.'/'.$album;
+	// Yeah, I see your point, putting html here is dirty... or pragmatic? :D
+?><!DOCTYPE html>
+<html>
+	<head>
+		<title><?= SG_TITLE ?></title>
+		<style>
+			header {
+				color: <?= SG_SECONDARY_COLOR ?>;
+				background-color: <?= SG_PRIMARY_COLOR ?>;
+			}
+		</style>
+	</head>
+	<body>
+		<header><?= SG_TITLE ?></header>
+		<main>
+			All photos: <ul>
+			<?php foreach ($all_photos as $photo): ?>
+				<li><a href="<?= $album_directory ?>/<?= $photo ?>"><img src="<?= $album_directory ?>/thumb-<?= $photo ?>"/></a></li>
+			<?php endforeach; ?>
+			</ul>
+		</main>
+	</body>
+</html>
 
-	echo "All photos: <ul>";
-	foreach ($all_photos as $photo) {
-		echo "<li><a href=\"$album_directory/$photo\">$album_directory/thumb-$photo</a></li>";
-	}
-	echo "</ul>";
+<?php
 }
 
 /**
