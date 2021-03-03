@@ -78,12 +78,28 @@ function sg_main() {
 	$existing_album = sg_get_existing_album($untrusted_requested_album);
 	$photos_in_album = sg_list_photos_in_album($existing_album);
 	
-	sg_show_album($existing_album, $photos_in_album);
+	$untrusted_requested_photo = sg_get_requested_download();
+	if ($untrusted_requested_photo !== false) {
+		sg_download($existing_album, $untrusted_requested_photo);
+	}
+	else {
+		sg_show_album($existing_album, $photos_in_album);
+	}
+}
+
+
+function sg_get_requested_download() {
+	if (isset($_GET['download'])) {
+		return $_GET['download'];
+	}
+	else {
+		return false;
+	}
 }
 
 
 function sg_get_untrusted_requested_album() {
-	$uri = $_SERVER['REQUEST_URI'];
+	$uri = $_SERVER['PATH_INFO'];
 
 	if (strlen($uri) > 1 && $uri[0] === '/') {
 		return substr($uri, 1);
@@ -167,6 +183,11 @@ function sg_get_album_directory($album = false) {
 }
 
 
+function sg_get_photo_absolute_path($album, $photo) {
+	return sg_get_album_directory($album).'/'.$photo;
+}
+
+
 /**
  * Attempt to parse the album name based on the standard naming of
  * YYYY-MM-DD_Album-topic_GUID
@@ -187,6 +208,30 @@ function sg_format_album_title($album_title) {
 }
 
 
+function sg_download($existing_album, $untrusted_requested_photo) {
+	$existing_photos = sg_list_photos_in_album($existing_album);
+
+	$index = array_search($untrusted_requested_photo, $existing_photos);
+	if ($index !== false) {
+		$existing_photo = $existing_photos[$index];
+		$photo_absolute_path = sg_get_photo_absolute_path($existing_album, $existing_photo);
+
+		header('Content-Description: File Transfer');
+		header('Content-Type: image/jpeg');
+		header('Content-Disposition: attachment; filename="'.$existing_photo.'"');
+		header('Expires: 0');
+		header('Cache-Control: must-revalidate');
+		header('Pragma: public');
+		header('Content-Length: ' . filesize($photo_absolute_path));
+		readfile($photo_absolute_path);
+		exit;
+	}
+	else {
+		die("SimpleGallery: No such photo");
+	}
+}
+
+
 function sg_show_album($album, $all_photos) {
 	$album_directory = SG_ALBUM_DIRECTORY.'/'.$album;
 	[$album_date, $album_title] = sg_parse_album_name($album);
@@ -196,6 +241,7 @@ function sg_show_album($album, $all_photos) {
 <html>
 	<head>
 		<title><?= SG_TITLE ?></title>
+		<meta name="viewport" content="width=device-width, initial-scale=1"/>
 		<style>
 			html, body {
 				padding: 0;	
@@ -243,7 +289,7 @@ function sg_show_album($album, $all_photos) {
 			<?php endif; ?>
 			<ul>
 			<?php foreach ($all_photos as $photo): ?>
-				<li><a href="<?= $album_directory ?>/<?= $photo ?>"><img src="<?= $album_directory ?>/thumb-<?= $photo ?>"/></a></li>
+				<li><a href="?download=<?= $photo ?>"><img src="<?= $album_directory ?>/thumb-<?= $photo ?>"/></a></li>
 			<?php endforeach; ?>
 			</ul>
 		</main>
